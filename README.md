@@ -6,7 +6,7 @@ Lokaler ioBroker-Adapter für Hoymiles-WLAN-DTUs. / Local ioBroker adapter for H
 
 ## Installation
 
-Voraussetzungen: Node.js ab 22.19.0, ioBroker js-controller ab 6 und Admin ab 5. Die DTU muss vom ioBroker-Rechner im lokalen Netzwerk erreichbar sein; Standardport ist TCP 10081. Python und Home Assistant werden nicht benötigt.
+Voraussetzungen: Node.js ab 22.19.0, ioBroker js-controller ab 6 und Admin ab 5. Die DTU muss vom ioBroker-Rechner im lokalen Netzwerk erreichbar sein; Standardport ist TCP 10081.
 
 Nach Bereitstellung dieses Repositorys in ioBroker unter **Adapter → Benutzerdefinierte Installation → Von GitHub** die Adresse `https://github.com/BeSiRe1/ioBroker.hoymiles-wifi` verwenden. Danach eine Instanz anlegen, DTU-Adresse eintragen und speichern. Ein Hoymiles-Konto ist nicht erforderlich.
 
