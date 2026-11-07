@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {sanitize,serial,liveValues,historyValues,signature,value}=require('../lib/values');
+const {sanitize,serial,liveValues,historyValues,alarmValues,signature,value}=require('../lib/values');
 const {Publisher}=require('../lib/publisher');
 const {Runtime}=require('../lib/runtime');
 const data={device_serial_number:'4143A0000001',timestamp:100,dtu_power:'1290',dtu_daily_energy:'168',sgs_data:[{serial_number:'22070226321409',active_power:1290,voltage:2300,frequency:4998,current:56,temperature:65504,link_status:0,power_factor:990}],pv_data:[{serial_number:'22070226321409',port_number:2,power:647,energy_total:236745,energy_daily:80},{serial_number:'22070226321409',port_number:1,power:725,energy_total:242557,energy_daily:88}],tgs_data:[{unmapped_field:42}],meter_data:[]};
@@ -37,6 +37,17 @@ test('history retains complete curve, timestamps and exact energy counters',()=>
   assert.deepEqual(JSON.parse(v['history.powerJson']),[0,12.3,45.6]);assert.equal(v['history.totalEnergy'],479.302);assert.equal(v['history.startTime'],1000000);
   assert.deepEqual(JSON.parse(v['history.pointsJson'])[2],{ts:1120000,power:45.6});
 });
+test('alarm error code uses the newest active entry and distinguishes empty or unknown lists',()=>{
+  const result=messages=>({messages:messages.map(warns=>({data:{warns}}))});
+  const active=alarmValues(result([[{code:17,s_time:100,e_time:0},{code:23,s_time:200,e_time:0},{code:9,s_time:300,e_time:301}]]));
+  assert.equal(map(active)['inverter.errorCode'],23);
+  assert.equal(map(alarmValues(result([[{code:29,s_time:220}]])))['inverter.errorCode'],29);
+  assert.equal(map(alarmValues(result([[]])))['inverter.errorCode'],0);
+  assert.equal(map(alarmValues({messages:[]}))['inverter.errorCode'],null);
+  assert.equal(map(alarmValues({messages:[{ack:{action:50}}]}))['inverter.errorCode'],null);
+  assert.equal(map(alarmValues(result([[{code:'23',s_time:200,e_time:0}]])))['inverter.errorCode'],null);
+  assert.equal(map(alarmValues(result([[{code:23,s_time:200,e_time:'0'}]])))['inverter.errorCode'],null);
+});
 test('packet timestamp changes alone do not count as changed measurements',()=>{
   assert.equal(signature(data),signature({...data,timestamp:200,cp:1}));assert.notEqual(signature(data),signature({...data,dtu_power:'1000'}));
 });
@@ -64,6 +75,17 @@ test('auxiliary failures do not turn successful live measurements offline',async
   const client={serial,initialize:async()=>({dtu_serial_number:serial}),live:async()=>data,history:async()=>{throw Object.assign(Error(),{code:'TIMEOUT'});},close:()=>{}};
   const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client,log:{info:()=>{},warn:()=>{},debug:()=>{}}});
   await runtime.readLive();await runtime.readBackground();assert.equal(m.states.get(serial+'.info.connected').val,true);assert.equal(runtime.capabilities.history.status,'unavailable');await runtime.stop();
+});
+test('background alarm query publishes confirmed codes and clears stale codes when data is unconfirmed',async()=>{
+  const m=memory();let reply={messages:[{data:{warns:[{code:41,s_time:10,e_time:0}]}}]};
+  const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client:{close:()=>{},alarms:async()=>reply},log:{info:()=>{},warn:()=>{},debug:()=>{}}});
+  runtime.serial='4143A0000001';runtime.initialized=true;runtime.tasks=[{name:'alarms',every:300000,next:0,read:()=>runtime.client.alarms()}];
+  await runtime.readBackground();
+  assert.equal(m.states.get('4143A0000001.inverter.errorCode').val,41);
+  assert.equal(m.objects.get('4143A0000001.inverter.errorCode').common.write,false);
+  reply={messages:[{ack:{action:50}}]};runtime.tasks[0].next=0;await runtime.readBackground();
+  assert.equal(m.states.get('4143A0000001.inverter.errorCode').val,null);
+  await runtime.stop();
 });
 test('stopping during startup cannot create orphan timers or later DTU requests',async()=>{
   let unblock,reads=0;

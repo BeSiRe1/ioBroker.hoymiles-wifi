@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (2026-11-07)
+
+- Publish the newest active inverter alarm code as inverter.errorCode. A confirmed list without active alarms yields 0; missing or invalid data remains unknown.
+
 ## 0.2.0 (2026-11-07)
 
 - Remove raw output and the duplicated inverters tree. Keep inverter and direct pv0/pv1 channels.

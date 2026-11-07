@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "news": {
+      "0.2.1": {
+        "en": "Publish the newest active inverter alarm code as inverter.errorCode; keep missing or unconfirmed alarm data unknown.",
+        "de": "Den neuesten aktiven Wechselrichter-Alarmcode als inverter.errorCode bereitstellen; fehlende oder unbestätigte Alarmdaten bleiben unbekannt."
+      },
       "0.2.0": {
         "en": "Simplify the structure to inverter and direct PV channels without raw or inverters output, retain midnight daily counters and add device online/offline marking.",
         "de": "Datenstruktur mit inverter und direkten PV-Kanälen ohne raw/inverters vereinfachen, Mitternachtsreset beibehalten und Online-/Offline-Markierung ergänzen."
