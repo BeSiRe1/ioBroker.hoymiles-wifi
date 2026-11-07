@@ -1,0 +1,92 @@
+# ioBroker.hoymiles-wifi
+
+Lokaler ioBroker-Adapter für Hoymiles-WLAN-DTUs. / Local ioBroker adapter for Hoymiles WiFi DTUs.
+
+**Entwicklungsversion 0.1.0.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
+
+## Installation
+
+Voraussetzungen: Node.js ab 22.19.0, ioBroker js-controller ab 6 und Admin ab 5. Die DTU muss vom ioBroker-Rechner im lokalen Netzwerk erreichbar sein; Standardport ist TCP 10081. Python und Home Assistant werden nicht benötigt.
+
+Nach Bereitstellung dieses Repositorys in ioBroker unter **Adapter → Benutzerdefinierte Installation → Von GitHub** die Adresse `https://github.com/BeSiRe1/ioBroker.hoymiles-wifi` verwenden. Danach eine Instanz anlegen, DTU-Adresse eintragen und speichern. Ein Hoymiles-Konto ist nicht erforderlich.
+
+Nur eine aktive lokale Integration sollte dieselbe DTU abfragen. Eine bestehende ioBroker- oder Home-Assistant-Anbindung vor dem Umstieg deaktivieren. Der Adapter ändert fremde Adapter, Aliase und Skripte nicht selbstständig.
+
+## Einstellungen
+
+| Einstellung | Standard | Bedeutung |
+| --- | --- | --- |
+| DTU-Adresse | leer | IP-Adresse oder Hostname |
+| Port | 10081 | Lokaler DTU-Port |
+| Livewerte | 35 Sekunden | Abstand nach Abschluss einer Liveabfrage; mindestens 35 Sekunden |
+| History | 300 Sekunden | Mindestens fünf Minuten; Hintergrundabfragen können bis zum nächsten freien Abfragefenster warten |
+| Antwortwartezeit | 10 Sekunden | Maximal 3–30 Sekunden pro Anfrage |
+
+Alle Anfragen laufen durch dieselbe Warteschlange. Pro Anfrage wird eine eigene TCP-Verbindung geöffnet und anschließend geschlossen. Nach dem Schließen liegen mindestens zwei Sekunden bis zur nächsten Anfrage. Es gibt keinen regelmäßigen zusätzlichen Heartbeat und keinen automatisch aktivierten Performance-Modus. Eine zusätzliche Abfrage erfolgt frühestens fünf Sekunden nach einer Liveabfrage; danach bleibt die nächste Liveabfrage geplant.
+
+## Datenpunkte
+
+Die Geräte liegen unter `hoymiles-wifi.0.<DTU-Seriennummer>`. Normalisierte Datenpunkte werden nur angelegt, wenn die DTU die zugehörigen Werte liefert. Ein echter Wert 0 bleibt 0; fehlende Daten werden nicht durch eine erfundene 0 ersetzt.
+
+Bei tatsächlich enthaltenen Wechselrichter-/PV-Datensätzen gelten für die Standardmesswerte die im Protobuf-Protokoll definierten Nullwerte, die auf der Leitung nicht nochmals übertragen werden müssen. Dadurch werden beispielsweise Nachtleistung und leere Tageszähler korrekt 0. Rohfelder, die in einer neuen vollständigen Antwort fehlen, werden auf null mit schlechter Qualität gesetzt und behalten keinen scheinbar gültigen alten Wert.
+
+| Bereich | Inhalt |
+| --- | --- |
+| `grid` | Leistung, Spannung, Strom, Frequenz, Blindleistung, Leistungsfaktor und Tagesertrag |
+| `inverter` | Übersicht bei einem Wechselrichter, Temperatur, Seriennummer, Warnungen und gemeldetes Leistungslimit |
+| `inverters.<Seriennummer>` | Einzelne Wechselrichter mit stabiler Zuordnung ihrer PV-Eingänge |
+| `pv0`, `pv1`, … | PV-Eingänge bei einem einzelnen Wechselrichter: Leistung, Spannung, Strom, Tages-/Gesamtertrag und Fehlercode |
+| `dtu` | Seriennummer und gemeldete Geräte-/Firmwareinformationen |
+| `history` | Vollständige historische Leistungskurve der abgefragten DTU-Antwort, Zeitstempel, Zeitraster und Energiezähler |
+| `raw.<Abfrage>.json` | Gesamte dekodierte Antwort mit allen bekannten Betriebsdatenfeldern |
+| `raw.<Abfrage>.fields` | Dieselben Felder einzeln; Rohwerte behalten die Protokollskalierung |
+| `info` | Erreichbarkeit, Alter, Fehler und Status der einzelnen Abfragen |
+
+Zusätzliche Listen, etwa andere Wechselrichtertypen, Repeater oder Zähler, bleiben auch ohne spezielle Normalisierung vollständig unter `raw` sichtbar. Die Protokolldefinitionen stammen aus hoymiles-wifi 0.5.5 und ergänzenden lokalen Warn-/Ereignisdefinitionen. Unbekannte, darin nicht beschriebene zukünftige Protokollfelder werden nicht interpretiert. WLAN-Passwörter, Sperrpasswörter und Verschlüsselungsmaterial werden weder als Datenpunkte noch als JSON veröffentlicht.
+
+### History
+
+- `powerJson`: sämtliche vollständig empfangenen Leistungspunkte in W.
+- `pointsJson`: dieselben Punkte als `{ts, power}` mit Unix-Zeit in Millisekunden, sofern Beginn und Zeitraster vorliegen.
+- `startTime`: Beginn der Kurve in Unix-Millisekunden.
+- `stepTime`: Abstand der Punkte in Sekunden.
+- `dailyEnergy`: gemeldeter Tagesertrag in Wh.
+- `totalEnergy`: gemeldeter Gesamtertrag in kWh, ohne Rundung auf eine Nachkommastelle.
+
+Mehrteilige Kurven werden erst nach erfolgreichem Empfang aller Seiten veröffentlicht. Eine unvollständige Abfrage überschreibt keine vorhandene Kurve. Die lokale DTU-Schnittstelle ersetzt kein unbegrenztes Cloud-Archiv: verfügbar ist, was die konkrete DTU auf diese historische Abfrage liefert. Ein Abruf sämtlicher vergangener Monate oder Jahre wird nicht zugesichert. Langfristige Aufzeichnung ist über ioBroker-History, InfluxDB oder vergleichbare Historisierung möglich.
+
+### Tagesertrag um Mitternacht
+
+`grid.dailyEnergy` sowie die Tageserträge der einzelnen PV-Eingänge werden um **00:00 Uhr Europe/Berlin** auf 0 gesetzt, auch bei ausgeschalteter oder nicht erreichbarer DTU. Sommer-/Winterzeit werden berücksichtigt. Ein beim Adapterstillstand verpasster Tageswechsel wird beim Start nachgeholt, sobald die DTU aus der gespeicherten Zuordnung bekannt ist.
+
+Die ursprünglichen DTU-Tageszähler stehen parallel unter `dailyEnergyDtu`. Die historischen Zähler unter `history` gehören weiterhin zum Datum der tatsächlichen Kurve (`history.curveDay`) und werden nicht verfälscht.
+
+Tagesstände und Vortagesgrenzen werden im lesbaren JSON-Zustand `internal.dailyEnergy` gespeichert. Beim neuen Tag werden positive Werte erst übernommen, wenn eine Zählerrücksetzung oder eine passende frische Kurve desselben Tages vorliegt. Bis dahin zeigt der Tageszähler 0 und `info.dailyConfirmed` ist false. Das gilt auch für die erste Einrichtung bei einem positiven Tageszähler. Bekannte alte Vortagesstände und verspätete Antworten von vor Mitternacht werden gesperrt. Innerhalb eines Tages werden keine Rücksprünge übernommen. Adapterneustarts löschen keine bestätigten Tagesstände; unveränderte Tagesstände werden nicht laufend erneut gespeichert.
+
+### Datenalter und Fehler
+
+- `info.lastResponse`: letzte erfolgreiche Liveantwort.
+- `info.responseAge`: Sekunden seit dieser Antwort, vor der ersten erfolgreichen Antwort -1.
+- `info.lastValueChange` / `valueChangeAge`: Änderung des Betriebsdatenpakets; ein neuer Paketzeitstempel allein zählt nicht als Wertänderung. Dies ist kein garantierter Messzeitpunkt jedes einzelnen Sensors.
+- `info.connected`: letzte Liveabfrage erfolgreich; bei einem Fehler false.
+- `info.stale`: fehlgeschlagene oder deutlich überfällige Liveantwort.
+- `info.consecutiveErrors`: Anzahl aufeinanderfolgender Livefehler.
+- `info.capabilities`: `available`, `unavailable` oder `acknowledged` pro Zusatzabfrage. Eine reine Befehlsbestätigung ist noch keine bestätigte Alarm-/Ereignisliste. `unavailable` kann auch eine vorübergehende Störung bedeuten.
+
+Bei Fehlern bleiben die letzten Messwerte erhalten, werden aber mit schlechter Qualität (`q=0x40`) markiert. Ein erfolgreicher neuer Abruf stellt normale Qualität wieder her. Fehler einer einzelnen Zusatzabfrage markieren nur deren Daten. Nach wiederholten Livefehlern werden DTU-Informationen und Verschlüsselung erneut ermittelt. Ein Gerätestart wird dafür nicht ausgelöst.
+
+## Entwicklung und Tests
+
+`npm ci`, danach `npm run check` und `npm test`. Die Tests decken Protokoll-/Verschlüsselungsreferenzen, fragmentierte TCP-Antworten, History-Seiten, Fehlersituationen, Einheiten, Maskierung, Wiederanlauf sowie die offiziellen ioBroker-Paket- und Startprüfungen ab. Die GitHub-Prüfung verwendet Node.js 22 und 24.
+
+Die Datei `.github/workflows/publish.yml` übernimmt den manuellen Veröffentlichungsablauf des Faikin-Projekts. Sie wird nur über `workflow_dispatch` gestartet und benötigt für npm ein eingerichtetes `NPM_TOKEN`. Normale GitHub-Pushes veröffentlichen kein npm-Paket.
+
+## English
+
+This development adapter reads a Hoymiles WiFi DTU directly over the local network. It requires Node.js 22.19+, js-controller 6+ and Admin 5+. Configure the DTU host and TCP port 10081. Live polling defaults to 35 seconds and historical polling to five minutes. All requests share a serialized queue, use a short-lived connection and wait at least two seconds after closing.
+
+Managed total/PV daily energy counters reset at midnight in Europe/Berlin, including offline operation and daylight-saving changes. Original device counters remain available as `dailyEnergyDtu`. Persistent restart protection and a current-day confirmation guard prevent the previous day's final value from immediately repopulating a reset counter; `info.dailyConfirmed` indicates confirmation.
+
+All decoded operating fields are exposed below `raw`; normalized grid, inverter, PV and history states are provided where supported. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
+
+Only one local integration should query the same DTU. See the German tables above for state groups and configuration. Tests and CI cover protocol, networking, projections and ioBroker startup. See [CHANGELOG.md](CHANGELOG.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).

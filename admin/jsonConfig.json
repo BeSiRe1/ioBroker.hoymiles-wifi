@@ -1,0 +1,14 @@
+{
+  "type":"panel",
+  "i18n":false,
+  "items":{
+    "_header":{"type":"header","text":{"de":"Verbindung zur DTU","en":"DTU connection"},"size":3,"sm":12},
+    "host":{"type":"text","label":{"de":"IP-Adresse oder Hostname der DTU","en":"DTU IP address or hostname"},"sm":8},
+    "port":{"type":"number","label":{"de":"DTU-Port","en":"DTU port"},"min":1,"max":65535,"default":10081,"sm":4},
+    "_pollHeader":{"type":"header","text":{"de":"Abfragen","en":"Polling"},"size":3,"newLine":true,"sm":12},
+    "interval":{"type":"number","label":{"de":"Livewerte: Abstand in Sekunden","en":"Live data interval in seconds"},"min":35,"max":3600,"default":35,"sm":6},
+    "historyInterval":{"type":"number","label":{"de":"History: Abstand in Sekunden","en":"History interval in seconds"},"min":300,"max":86400,"default":300,"sm":6},
+    "timeout":{"type":"number","label":{"de":"Wartezeit auf eine Antwort in Sekunden","en":"Response timeout in seconds"},"min":3,"max":30,"default":10,"sm":6},
+    "_help":{"type":"staticText","newLine":true,"text":{"de":"Der Adapter liest die DTU direkt im lokalen Netzwerk aus. Die Internetverbindung und ein Hoymiles-Konto sind dafür nicht erforderlich. Verwende nur eine aktive lokale Anbindung zur selben DTU. Die Datenpunkte werden anhand der tatsächlich gemeldeten Daten angelegt. Nicht unterstützte Abfragen sind unter info.capabilities erkennbar.","en":"The adapter reads the DTU directly on the local network. No internet connection or Hoymiles account is required. Use only one active local integration for the same DTU. States are created from the data actually reported. Unsupported or unsuccessful requests are visible in info.capabilities."},"sm":12}
+  }
+}

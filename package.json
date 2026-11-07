@@ -1,0 +1,51 @@
+{
+  "name": "iobroker.hoymiles-wifi",
+  "version": "0.1.0",
+  "description": "Local Hoymiles DTU reader with serialized short-lived connections and complete decoded operating data",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "BeSiRe1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BeSiRe1/ioBroker.hoymiles-wifi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BeSiRe1/ioBroker.hoymiles-wifi/issues"
+  },
+  "homepage": "https://github.com/BeSiRe1/ioBroker.hoymiles-wifi#readme",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "check": "node --check main.js && node --check lib/protocol.js && node --check lib/runtime.js && node --check lib/values.js && node --check lib/publisher.js && node --check lib/daily.js",
+    "test": "npm run test:unit && npm run test:package && npm run test:integration",
+    "test:unit": "node --test --test-concurrency=1 test/*.test.js",
+    "test:package": "mocha --exit test/package.js",
+    "test:integration": "mocha --exit test/integration.js"
+  },
+  "files": [
+    "main.js",
+    "lib/",
+    "admin/",
+    "protocol/",
+    "io-package.json",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "ioBroker",
+    "hoymiles",
+    "dtu",
+    "energy"
+  ],
+  "dependencies": {
+    "@iobroker/adapter-core": "3.4.3",
+    "protobufjs": "8.8.1"
+  },
+  "devDependencies": {
+    "@iobroker/testing": "6.3.1",
+    "mocha": "12.0.3"
+  }
+}
