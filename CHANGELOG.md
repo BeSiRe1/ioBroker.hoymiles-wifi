@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 (2026-11-07)
+
+- Add German labels for all 227 documented alarm/event codes in the combined lookup, identifying model-dependent meanings; retain numeric and unknown codes.
+- Add percent to DTU signal quality and seconds to the unmodified communication timestamp. Update units and lookup metadata on existing states.
+
 ## 0.2.1 (2026-11-07)
 
 - Publish the newest active inverter alarm code as inverter.errorCode. A confirmed list without active alarms yields 0; missing or invalid data remains unknown.

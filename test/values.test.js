@@ -1,11 +1,32 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {sanitize,serial,liveValues,historyValues,alarmValues,signature,value}=require('../lib/values');
+const {sanitize,serial,liveValues,historyValues,infoValues,alarmValues,signature,value}=require('../lib/values');
 const {Publisher}=require('../lib/publisher');
 const {Runtime}=require('../lib/runtime');
 const data={device_serial_number:'4143A0000001',timestamp:100,dtu_power:'1290',dtu_daily_energy:'168',sgs_data:[{serial_number:'22070226321409',active_power:1290,voltage:2300,frequency:4998,current:56,temperature:65504,link_status:0,power_factor:990}],pv_data:[{serial_number:'22070226321409',port_number:2,power:647,energy_total:236745,energy_daily:80},{serial_number:'22070226321409',port_number:1,power:725,energy_total:242557,energy_daily:88}],tgs_data:[{unmapped_field:42}],meter_data:[]};
 const map=items=>Object.fromEntries(items.map(x=>[x.id,x.val]));
+test('alarm labels cover the combined list without rejecting unknown numeric codes',()=>{
+  const states=require('../lib/alarm-codes.json');
+  assert.equal(Object.keys(states).length,227);
+  for(const [code,label] of Object.entries(states)){assert.match(code,/^\d+$/);assert.ok(label.startsWith(code+' – '));assert.ok(!/undefined|null/.test(label));}
+  assert.match(states[141],/Netzüberspannung/);assert.match(states[221],/modellabhängig/);assert.match(states[0],/Kein aktiver Alarm/);
+  const entry=alarmValues({messages:[{data:{warns:[{code:999999,s_time:1,e_time:0}]}}]})[0];
+  assert.equal(entry.val,999999);assert.equal(entry.type,'number');assert.equal(entry.states[999999],undefined);
+});
+test('reported units retain their numeric scaling and existing metadata receives units and labels',async()=>{
+  const info=infoValues({dtu_info:{signal_strength:76,communication_time:1794048861}});
+  assert.equal(info.find(x=>x.id==='dtu.signalStrength').unit,'%');assert.equal(info.find(x=>x.id==='dtu.communicationTime').unit,'s');
+  assert.equal(map(info)['dtu.communicationTime'],1794048861);
+  const m=memory(),id='DTU.inverter.errorCode';
+  m.objects.set(id,{type:'state',common:{name:'Eigener Name',type:'number',custom:{history:{enabled:true}}},native:{keep:true},acl:{owner:'keep'}});
+  await m.publisher.publish('DTU',alarmValues({messages:[{data:{warns:[{code:141,s_time:1}]}}]}),'alarms');
+  await m.publisher.publish('DTU',info,'appInfo');
+  assert.match(m.objects.get(id).common.states[141],/Netzüberspannung/);assert.equal(m.states.get(id).val,141);
+  assert.equal(m.objects.get(id).common.name,'Eigener Name');assert.equal(m.objects.get(id).common.custom.history.enabled,true);
+  assert.equal(m.objects.get(id).native.keep,true);assert.equal(m.objects.get(id).acl.owner,'keep');
+  assert.equal(m.objects.get('DTU.dtu.signalStrength').common.unit,'%');
+});
 function memory(){
   const objects=new Map(),states=new Map(),writes=[];
   const adapter={setObjectNotExistsAsync:async(id,obj)=>{if(!objects.has(id))objects.set(id,obj);},getObjectAsync:async id=>objects.get(id),extendObjectAsync:async(id,obj)=>{const old=objects.get(id)||{};objects.set(id,{...old,...obj,common:{...old.common,...obj.common}});},delObjectAsync:async(id,options)=>{assert.equal(options.recursive,true);for(const key of [...objects.keys()])if(key===id||key.startsWith(id+'.'))objects.delete(key);for(const key of [...states.keys()])if(key===id||key.startsWith(id+'.'))states.delete(key);},setStateAsync:async(id,state)=>{states.set(id,state);writes.push({id,...state});},getStateAsync:async id=>states.get(id)};

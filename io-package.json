@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "news": {
+      "0.2.2": {
+        "en": "Add German alarm-code labels and complete verified signal-quality/time units, including existing state objects.",
+        "de": "Deutsche Alarmcode-Werteliste und belegte Einheiten für Signalqualität und Zeit auch an bestehenden Datenpunkten ergänzen."
+      },
       "0.2.1": {
         "en": "Publish the newest active inverter alarm code as inverter.errorCode; keep missing or unconfirmed alarm data unknown.",
         "de": "Den neuesten aktiven Wechselrichter-Alarmcode als inverter.errorCode bereitstellen; fehlende oder unbestätigte Alarmdaten bleiben unbekannt."
