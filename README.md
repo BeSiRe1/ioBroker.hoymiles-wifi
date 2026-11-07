@@ -36,10 +36,10 @@ Bei tatsächlich enthaltenen Wechselrichter-/PV-Datensätzen gelten für die Sta
 | `inverter` | Übersicht bei einem Wechselrichter, Temperatur, Seriennummer, Warnungen und gemeldetes Leistungslimit |
 | `pv0`, `pv1`, … | PV-Eingänge bei einem einzelnen Wechselrichter: Leistung, Spannung, Strom, Tages-/Gesamtertrag und Fehlercode |
 | `dtu` | Seriennummer und gemeldete Geräte-/Firmwareinformationen |
-| `history` | Vollständige historische Leistungskurve der abgefragten DTU-Antwort, Zeitstempel, Zeitraster und Energiezähler |
+| `history` | Vollständiger zeitlicher Leistungsverlauf der abgefragten DTU-Antwort, Zeitstempel, Zeitraster und Energiezähler |
 | `info` | Erreichbarkeit, Alter, Fehler und Status der einzelnen Abfragen |
 
-Die Struktur enthält keinen `raw`- und keinen `inverters`-Ordner. Wechselrichterdaten stehen unter `inverter`, die PV-Eingänge direkt unter `pv0`, `pv1` usw. Zusätzliche nicht normalisierte Protokollfelder werden nicht als Datenpunkte ausgegeben. Passwörter und Verschlüsselungsmaterial werden nicht veröffentlicht.
+Wechselrichterdaten stehen unter `inverter`, die PV-Eingänge direkt unter `pv0`, `pv1` usw. Zusätzliche nicht normalisierte Protokollfelder werden nicht als Datenpunkte ausgegeben. Passwörter und Verschlüsselungsmaterial werden nicht veröffentlicht.
 
 Das Geräteobjekt ist über `info.connected` mit der Online-/Offline-Markierung im ioBroker-Admin verknüpft. Sie zeigt die Erreichbarkeit der DTU an.
 
@@ -47,20 +47,20 @@ Das Geräteobjekt ist über `info.connected` mit der Online-/Offline-Markierung 
 
 - `powerJson`: sämtliche vollständig empfangenen Leistungspunkte in W.
 - `pointsJson`: dieselben Punkte als `{ts, power}` mit Unix-Zeit in Millisekunden, sofern Beginn und Zeitraster vorliegen.
-- `startTime`: Beginn der Kurve in Unix-Millisekunden.
+- `startTime`: Beginn des Leistungsverlaufs in Unix-Millisekunden.
 - `stepTime`: Abstand der Punkte in Sekunden.
 - `dailyEnergy`: gemeldeter Tagesertrag in Wh.
 - `totalEnergy`: gemeldeter Gesamtertrag in kWh, ohne Rundung auf eine Nachkommastelle.
 
-Mehrteilige Kurven werden erst nach erfolgreichem Empfang aller Seiten veröffentlicht. Eine unvollständige Abfrage überschreibt keine vorhandene Kurve. Die lokale DTU-Schnittstelle ersetzt kein unbegrenztes Cloud-Archiv: verfügbar ist, was die konkrete DTU auf diese historische Abfrage liefert. Ein Abruf sämtlicher vergangener Monate oder Jahre wird nicht zugesichert. Langfristige Aufzeichnung ist über ioBroker-History, InfluxDB oder vergleichbare Historisierung möglich.
+Ein in mehreren Teilen übertragener Leistungsverlauf wird erst nach erfolgreichem Empfang aller Teile veröffentlicht. Eine unvollständige Abfrage überschreibt keinen vorhandenen Leistungsverlauf. Die lokale DTU-Schnittstelle ersetzt kein unbegrenztes Cloud-Archiv: verfügbar ist, was die konkrete DTU auf diese historische Abfrage liefert. Ein Abruf sämtlicher vergangener Monate oder Jahre wird nicht zugesichert. Langfristige Aufzeichnung ist über ioBroker-History, InfluxDB oder vergleichbare Historisierung möglich.
 
 ### Tagesertrag um Mitternacht
 
 `grid.dailyEnergy` sowie die Tageserträge der einzelnen PV-Eingänge werden um **00:00 Uhr Europe/Berlin** auf 0 gesetzt, auch bei ausgeschalteter oder nicht erreichbarer DTU. Sommer-/Winterzeit werden berücksichtigt. Ein beim Adapterstillstand verpasster Tageswechsel wird beim Start nachgeholt, sobald die DTU aus der gespeicherten Zuordnung bekannt ist.
 
-Die ursprünglichen DTU-Tageszähler stehen parallel unter `dailyEnergyDtu`. Die historischen Zähler unter `history` gehören weiterhin zum Datum der tatsächlichen Kurve (`history.curveDay`) und werden nicht verfälscht.
+Die ursprünglichen DTU-Tageszähler stehen parallel unter `dailyEnergyDtu`. Die historischen Zähler unter `history` bleiben dem Tag zugeordnet, für den die DTU den Leistungsverlauf geliefert hat. Dieses Datum steht unter `history.curveDay`.
 
-Tagesstände und Vortagesgrenzen werden im lesbaren JSON-Zustand `internal.dailyEnergy` gespeichert. Beim neuen Tag werden positive Werte erst übernommen, wenn eine Zählerrücksetzung oder eine passende frische Kurve desselben Tages vorliegt. Bis dahin zeigt der Tageszähler 0 und `info.dailyConfirmed` ist false. Das gilt auch für die erste Einrichtung bei einem positiven Tageszähler. Bekannte alte Vortagesstände und verspätete Antworten von vor Mitternacht werden gesperrt. Innerhalb eines Tages werden keine Rücksprünge übernommen. Adapterneustarts löschen keine bestätigten Tagesstände; unveränderte Tagesstände werden nicht laufend erneut gespeichert.
+Tagesstände und Vortagesgrenzen werden im lesbaren JSON-Zustand `internal.dailyEnergy` gespeichert. Beim neuen Tag werden positive Werte erst übernommen, wenn eine Zählerrücksetzung oder ein passender, neu abgerufener Leistungsverlauf desselben Tages vorliegt. Bis dahin zeigt der Tageszähler 0 und `info.dailyConfirmed` ist false. Das gilt auch für die erste Einrichtung bei einem positiven Tageszähler. Bekannte alte Vortagesstände und verspätete Antworten von vor Mitternacht werden gesperrt. Innerhalb eines Tages werden keine Rücksprünge übernommen. Adapterneustarts löschen keine bestätigten Tagesstände; unveränderte Tagesstände werden nicht laufend erneut gespeichert.
 
 ### Datenalter und Fehler
 
