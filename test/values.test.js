@@ -82,20 +82,23 @@ test('publisher writes unchanged values again and invalidates only the failed gr
 test('runtime marks failures, preserves old values, then recovers and refreshes encryption handshake',async()=>{
   const m=memory(),serial='4143A0000001';let failures=0,initializations=0,now=1000,closed=false;
   const client={serial,initialize:async()=>{initializations++;return {dtu_serial_number:serial};},live:async()=>{if(failures>0){failures--;throw Object.assign(Error(),{code:'TIMEOUT'});}return data;},close:()=>{closed=true;}};
-  const log={info:()=>{},warn:()=>{},debug:()=>{}};
+  const messages=[];const log=Object.fromEntries(['info','warn','debug','error'].map(level=>[level,message=>messages.push({level,message})]));
   const runtime=new Runtime({config:{host:'127.0.0.1',interval:1},publisher:m.publisher,client,log,now:()=>now});
   assert.equal(runtime.interval,35000);
   await runtime.readLive();assert.equal(m.states.get(serial+'.info.connected').val,true);
-  failures=2;now+=40000;await runtime.readLive();await runtime.readLive();
+  failures=20;for(let i=0;i<20;i++){now+=40000;await runtime.readLive();}
   assert.equal(m.states.get(serial+'.info.stale').val,true);assert.equal(m.states.get(serial+'.grid.power').val,129);assert.equal(m.states.get(serial+'.grid.power').q,0x40);
-  now+=40000;await runtime.readLive();assert.equal(initializations,2);assert.equal(m.states.get(serial+'.info.consecutiveErrors').val,0);assert.equal(m.states.get(serial+'.grid.power').q,0);
+  assert.equal(m.states.get(serial+'.info.consecutiveErrors').val,20);assert.equal(m.states.get(serial+'.info.lastError').val,'TIMEOUT');
+  now+=40000;await runtime.readLive();assert.equal(initializations,20);assert.equal(m.states.get(serial+'.info.consecutiveErrors').val,0);assert.equal(m.states.get(serial+'.grid.power').q,0);
+  assert.deepEqual(messages,[]);
   await runtime.stop();assert.equal(closed,true);assert.equal(m.states.get('info.connection').val,false);assert.equal(m.states.get(serial+'.info.connected').val,false);
 });
 test('auxiliary failures do not turn successful live measurements offline',async()=>{
   const m=memory(),serial='4143A0000001';
   const client={serial,initialize:async()=>({dtu_serial_number:serial}),live:async()=>data,history:async()=>{throw Object.assign(Error(),{code:'TIMEOUT'});},close:()=>{}};
-  const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client,log:{info:()=>{},warn:()=>{},debug:()=>{}}});
-  await runtime.readLive();await runtime.readBackground();assert.equal(m.states.get(serial+'.info.connected').val,true);assert.equal(runtime.capabilities.history.status,'unavailable');await runtime.stop();
+  const messages=[];const log=Object.fromEntries(['info','warn','debug','error'].map(level=>[level,message=>messages.push({level,message})]));
+  const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client,log});
+  await runtime.readLive();await runtime.readBackground();assert.equal(m.states.get(serial+'.info.connected').val,true);assert.equal(runtime.capabilities.history.status,'unavailable');assert.deepEqual(messages,[]);await runtime.stop();
 });
 test('background alarm query publishes confirmed codes and clears stale codes when data is unconfirmed',async()=>{
   const m=memory();let reply={messages:[{data:{warns:[{code:41,s_time:10,e_time:0}]}}]};

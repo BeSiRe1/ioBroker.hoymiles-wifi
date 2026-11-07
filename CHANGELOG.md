@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3 (2026-11-07)
+
+- Silence DTU live/background connection failures, repeated retries and recovery messages. Preserve status states, data quality and automatic reconnection.
+
 ## 0.2.2 (2026-11-07)
 
 - Add German labels for all 227 documented alarm/event codes in the combined lookup, identifying model-dependent meanings; retain numeric and unknown codes.

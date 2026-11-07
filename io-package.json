@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "news": {
+      "0.2.3": {
+        "en": "Keep DTU connection failures, repeated retries and recovery silent while retaining status states and automatic reconnect.",
+        "de": "DTU-Verbindungsfehler, weitere Fehlversuche und Wiederverbindung ohne Logmeldungen behandeln; Statusdatenpunkte und automatische Verbindungsversuche beibehalten."
+      },
       "0.2.2": {
         "en": "Add German alarm-code labels and complete verified signal-quality/time units, including existing state objects.",
         "de": "Deutsche Alarmcode-Werteliste und belegte Einheiten für Signalqualität und Zeit auch an bestehenden Datenpunkten ergänzen."
