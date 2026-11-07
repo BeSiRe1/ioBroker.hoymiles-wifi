@@ -2,7 +2,7 @@
 
 Lokaler ioBroker-Adapter für Hoymiles-WLAN-DTUs. / Local ioBroker adapter for Hoymiles WiFi DTUs.
 
-**Entwicklungsversion 0.1.0.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
+**Entwicklungsversion 0.2.0.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
 
 ## Installation
 
@@ -10,7 +10,7 @@ Voraussetzungen: Node.js ab 22.19.0, ioBroker js-controller ab 6 und Admin ab 5.
 
 Nach Bereitstellung dieses Repositorys in ioBroker unter **Adapter → Benutzerdefinierte Installation → Von GitHub** die Adresse `https://github.com/BeSiRe1/ioBroker.hoymiles-wifi` verwenden. Danach eine Instanz anlegen, DTU-Adresse eintragen und speichern. Ein Hoymiles-Konto ist nicht erforderlich.
 
-Nur eine aktive lokale Integration sollte dieselbe DTU abfragen. Eine bestehende ioBroker- oder Home-Assistant-Anbindung vor dem Umstieg deaktivieren. Der Adapter ändert fremde Adapter, Aliase und Skripte nicht selbstständig.
+Nur eine aktive lokale Integration sollte dieselbe DTU abfragen. Eine bestehende ioBroker- oder Home-Assistant-Anbindung vor dem Umstieg deaktivieren.
 
 ## Einstellungen
 
@@ -28,21 +28,20 @@ Alle Anfragen laufen durch dieselbe Warteschlange. Pro Anfrage wird eine eigene 
 
 Die Geräte liegen unter `hoymiles-wifi.0.<DTU-Seriennummer>`. Normalisierte Datenpunkte werden nur angelegt, wenn die DTU die zugehörigen Werte liefert. Ein echter Wert 0 bleibt 0; fehlende Daten werden nicht durch eine erfundene 0 ersetzt.
 
-Bei tatsächlich enthaltenen Wechselrichter-/PV-Datensätzen gelten für die Standardmesswerte die im Protobuf-Protokoll definierten Nullwerte, die auf der Leitung nicht nochmals übertragen werden müssen. Dadurch werden beispielsweise Nachtleistung und leere Tageszähler korrekt 0. Rohfelder, die in einer neuen vollständigen Antwort fehlen, werden auf null mit schlechter Qualität gesetzt und behalten keinen scheinbar gültigen alten Wert.
+Bei tatsächlich enthaltenen Wechselrichter-/PV-Datensätzen gelten für die Standardmesswerte die im Protobuf-Protokoll definierten Nullwerte, die auf der Leitung nicht nochmals übertragen werden müssen. Dadurch werden beispielsweise Nachtleistung und leere Tageszähler korrekt 0. Werte, die in einer neuen vollständigen Antwort fehlen, werden auf null mit schlechter Qualität gesetzt und behalten keinen scheinbar gültigen alten Wert.
 
 | Bereich | Inhalt |
 | --- | --- |
 | `grid` | Leistung, Spannung, Strom, Frequenz, Blindleistung, Leistungsfaktor und Tagesertrag |
 | `inverter` | Übersicht bei einem Wechselrichter, Temperatur, Seriennummer, Warnungen und gemeldetes Leistungslimit |
-| `inverters.<Seriennummer>` | Einzelne Wechselrichter mit stabiler Zuordnung ihrer PV-Eingänge |
 | `pv0`, `pv1`, … | PV-Eingänge bei einem einzelnen Wechselrichter: Leistung, Spannung, Strom, Tages-/Gesamtertrag und Fehlercode |
 | `dtu` | Seriennummer und gemeldete Geräte-/Firmwareinformationen |
 | `history` | Vollständige historische Leistungskurve der abgefragten DTU-Antwort, Zeitstempel, Zeitraster und Energiezähler |
-| `raw.<Abfrage>.json` | Gesamte dekodierte Antwort mit allen bekannten Betriebsdatenfeldern |
-| `raw.<Abfrage>.fields` | Dieselben Felder einzeln; Rohwerte behalten die Protokollskalierung |
 | `info` | Erreichbarkeit, Alter, Fehler und Status der einzelnen Abfragen |
 
-Zusätzliche Listen, etwa andere Wechselrichtertypen, Repeater oder Zähler, bleiben auch ohne spezielle Normalisierung vollständig unter `raw` sichtbar. Die Protokolldefinitionen stammen aus hoymiles-wifi 0.5.5 und ergänzenden lokalen Warn-/Ereignisdefinitionen. Unbekannte, darin nicht beschriebene zukünftige Protokollfelder werden nicht interpretiert. WLAN-Passwörter, Sperrpasswörter und Verschlüsselungsmaterial werden weder als Datenpunkte noch als JSON veröffentlicht.
+Die Struktur enthält keinen `raw`- und keinen `inverters`-Ordner. Wechselrichterdaten stehen unter `inverter`, die PV-Eingänge direkt unter `pv0`, `pv1` usw. Zusätzliche nicht normalisierte Protokollfelder werden nicht als Datenpunkte ausgegeben. Passwörter und Verschlüsselungsmaterial werden nicht veröffentlicht.
+
+Das Geräteobjekt ist über `info.connected` mit der Online-/Offline-Markierung im ioBroker-Admin verknüpft. Sie zeigt die Erreichbarkeit der DTU an.
 
 ### History
 
@@ -87,6 +86,6 @@ This development adapter reads a Hoymiles WiFi DTU directly over the local netwo
 
 Managed total/PV daily energy counters reset at midnight in Europe/Berlin, including offline operation and daylight-saving changes. Original device counters remain available as `dailyEnergyDtu`. Persistent restart protection and a current-day confirmation guard prevent the previous day's final value from immediately repopulating a reset counter; `info.dailyConfirmed` indicates confirmation.
 
-All decoded operating fields are exposed below `raw`; normalized grid, inverter, PV and history states are provided where supported. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
+Normalized grid, inverter, direct PV and history states are provided where supported. Version 0.2.0 uses only the simplified inverter and direct PV structure, with device online/offline marking through info.connected. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
 
 Only one local integration should query the same DTU. See the German tables above for state groups and configuration. Tests and CI cover protocol, networking, projections and ioBroker startup. See [CHANGELOG.md](CHANGELOG.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).

@@ -1,14 +1,14 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {sanitize,serial,rawValues,liveValues,historyValues,signature}=require('../lib/values');
+const {sanitize,serial,liveValues,historyValues,signature,value}=require('../lib/values');
 const {Publisher}=require('../lib/publisher');
 const {Runtime}=require('../lib/runtime');
 const data={device_serial_number:'4143A0000001',timestamp:100,dtu_power:'1290',dtu_daily_energy:'168',sgs_data:[{serial_number:'22070226321409',active_power:1290,voltage:2300,frequency:4998,current:56,temperature:65504,link_status:0,power_factor:990}],pv_data:[{serial_number:'22070226321409',port_number:2,power:647,energy_total:236745,energy_daily:80},{serial_number:'22070226321409',port_number:1,power:725,energy_total:242557,energy_daily:88}],tgs_data:[{unmapped_field:42}],meter_data:[]};
 const map=items=>Object.fromEntries(items.map(x=>[x.id,x.val]));
 function memory(){
   const objects=new Map(),states=new Map(),writes=[];
-  const adapter={setObjectNotExistsAsync:async(id,obj)=>{if(!objects.has(id))objects.set(id,obj);},setStateAsync:async(id,state)=>{states.set(id,state);writes.push({id,...state});},getStateAsync:async id=>states.get(id)};
+  const adapter={setObjectNotExistsAsync:async(id,obj)=>{if(!objects.has(id))objects.set(id,obj);},getObjectAsync:async id=>objects.get(id),extendObjectAsync:async(id,obj)=>{const old=objects.get(id)||{};objects.set(id,{...old,...obj,common:{...old.common,...obj.common}});},delObjectAsync:async(id,options)=>{assert.equal(options.recursive,true);for(const key of [...objects.keys()])if(key===id||key.startsWith(id+'.'))objects.delete(key);for(const key of [...states.keys()])if(key===id||key.startsWith(id+'.'))states.delete(key);},setStateAsync:async(id,state)=>{states.set(id,state);writes.push({id,...state});},getStateAsync:async id=>states.get(id)};
   return {objects,states,writes,publisher:new Publisher(adapter)};
 }
 test('normalizes units and negative temperatures, keeps panel identity by port',()=>{
@@ -22,16 +22,15 @@ test('zero is valid, missing values are not fabricated',()=>{
   assert.equal(v['grid.power'],0);assert.equal(v['grid.dailyEnergy'],0);assert.equal(v['grid.voltage'],undefined);
   assert.deepEqual(liveValues({sgs_data:[],pv_data:[]}),[]);
 });
-test('64-bit serials remain exact and all unnormalized fields remain accessible',()=>{
+test('64-bit serials remain exact and PV data is only published directly below the DTU',()=>{
   assert.equal(serial('18446744073709551615'),'FFFFFFFFFFFFFFFF');
-  const raw=rawValues('live',data);const json=JSON.parse(raw[0].val);
-  assert.equal(json.tgs_data[0].unmapped_field,42);assert.equal(json.pv_data[0].serial_number,'22070226321409');
-  assert.ok(raw.some(x=>x.id.includes('sn1412A0000001_port1.power')));
+  const values=liveValues(data);assert.ok(values.some(x=>x.id==='pv0.power'));assert.ok(values.some(x=>x.id==='pv1.power'));assert.ok(values.some(x=>x.id==='inverter.temperature'));
+  assert.ok(values.every(x=>!x.id.startsWith('inverters.')&&!x.id.startsWith('raw.')));assert.equal(require('../lib/values').rawValues,undefined);
 });
 test('credentials and encryption material never enter published JSON or fields',()=>{
   const secret={wifi_password:'DO_NOT_STORE',lock_password:123,apn_password:'DO_NOT_STORE',dtu_ap_pass:'DO_NOT_STORE',dtu_info:{enc_rand:'DO_NOT_STORE',signal_strength:3},nested:[{token:'DO_NOT_STORE',value:0}]};
   const clean=sanitize(secret);assert.equal(clean.dtu_info.signal_strength,3);assert.equal(clean.nested[0].value,0);
-  const text=JSON.stringify(rawValues('config',secret));assert.ok(!text.includes('DO_NOT_STORE'));assert.ok(!text.includes('enc_rand'));assert.ok(!text.includes('lock_password'));
+  const text=JSON.stringify(clean);assert.ok(!text.includes('DO_NOT_STORE'));assert.ok(!text.includes('enc_rand'));assert.ok(!text.includes('lock_password'));
 });
 test('history retains complete curve, timestamps and exact energy counters',()=>{
   const v=map(historyValues({absolute_start:1000,step_time:60,power_array:[0,123,456],daily_energy:168,total_energy:479302}));
@@ -81,6 +80,15 @@ test('protobuf-default night values reset actual inverter and PV measurements to
   const h=map(historyValues({serial_number:'1',power_array:[]}));assert.equal(h['history.dailyEnergy'],0);assert.equal(h['history.pointsJson'],'[]');assert.equal(h['history.timestampsAvailable'],false);
 });
 test('fields absent from a new complete reply cannot retain old apparently valid data',async()=>{
-  const m=memory();await m.publisher.publish('DTU',rawValues('live',{extra:12}),'live');await m.publisher.publish('DTU',rawValues('live',{different:0}),'live');
-  assert.equal(m.states.get('DTU.raw.live.fields.extra').val,null);assert.equal(m.states.get('DTU.raw.live.fields.extra').q,0x40);assert.equal(m.states.get('DTU.raw.live.fields.different').val,0);
+  const m=memory();await m.publisher.publish('DTU',[value('dtu.signalStrength',12)],'appInfo');await m.publisher.publish('DTU',[value('dtu.errorCode',0)],'appInfo');
+  assert.equal(m.states.get('DTU.dtu.signalStrength').val,null);assert.equal(m.states.get('DTU.dtu.signalStrength').q,0x40);assert.equal(m.states.get('DTU.dtu.errorCode').val,0);
+});
+test('device online binding preserves existing objects and metadata without deleting folders',async()=>{
+  const m=memory(),sn='4143A0000001';
+  for(const id of [sn,sn+'.raw',sn+'.raw.old',sn+'.inverters',sn+'.inverters.ABC.pv0',sn+'.inverter',sn+'.pv0',sn+'.pv1',sn+'.internal.dailyEnergy','4143B0000001.raw'])m.objects.set(id,{type:id===sn?'device':'channel',common:{name:'Keep this name'},native:{custom:true}});
+  m.states.set(sn+'.raw.old',{val:12});m.states.set(sn+'.internal.dailyEnergy',{val:'keep'});
+  await m.publisher.device(sn,'Default name');
+  assert.equal(m.objects.get(sn).common.name,'Keep this name');assert.deepEqual(m.objects.get(sn).common.statusStates,{onlineId:'info.connected'});assert.equal(m.objects.get(sn).native.custom,true);
+  for(const id of [sn+'.raw',sn+'.raw.old',sn+'.inverters',sn+'.inverters.ABC.pv0',sn+'.inverter',sn+'.pv0',sn+'.pv1',sn+'.internal.dailyEnergy','4143B0000001.raw'])assert.equal(m.objects.has(id),true);
+  assert.equal(m.states.get(sn+'.internal.dailyEnergy').val,'keep');await assert.rejects(m.publisher.device('../other','No'),/INVALID_DEVICE_ID/);
 });

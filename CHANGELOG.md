@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 (2026-11-07)
+
+- Remove raw output and the duplicated inverters tree. Keep inverter and direct pv0/pv1 channels.
+- Bind the device online/offline marking to info.connected.
+- Keep total/PV daily counters with midnight reset and restart protection.
+
 ## 0.1.0 (2026-11-07)
 
 - Initial local DTU reader with short-lived TCP connections, serialized requests and a two-second minimum pause.

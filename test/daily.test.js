@@ -56,7 +56,7 @@ test('known DTU counters reset during offline startup and no device request is n
   const old=new Daily(noon);old.receive({'grid.dailyEnergy':1},noon,observation(noon),proof(noon,1));
   const states=new Map([['info.deviceIdentity',{val:JSON.stringify({host:'127.0.0.1',port:10081,serial})}],[serial+'.internal.dailyEnergy',{val:old.serialize()}]]);
   let requests=0;
-  const publisher=new Publisher({setObjectNotExistsAsync:async()=>{},setStateAsync:async(id,state)=>states.set(id,state),getStateAsync:async id=>states.get(id)});
+  const publisher=new Publisher({setObjectNotExistsAsync:async()=>{},getObjectAsync:async()=>null,extendObjectAsync:async()=>{},delObjectAsync:async()=>{},setStateAsync:async(id,state)=>states.set(id,state),getStateAsync:async id=>states.get(id)});
   const runtime=new Runtime({config:{host:'127.0.0.1'},publisher,client:{close:()=>{},initialize:async()=>{requests++;}},log:{info:()=>{},warn:()=>{},debug:()=>{}},now:()=>now});
   await runtime.restoreIdentity();assert.equal(states.get(serial+'.grid.dailyEnergy').val,0);assert.equal(states.get(serial+'.info.dailyConfirmed').val,false);assert.equal(requests,0);await runtime.stop();
 });
