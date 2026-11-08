@@ -65,6 +65,10 @@ test('alarm error code uses the newest active entry and distinguishes empty or u
   assert.equal(map(active)['inverter.errorCode'],23);
   assert.equal(map(alarmValues(result([[{code:29,s_time:220}]])))['inverter.errorCode'],29);
   assert.equal(map(alarmValues(result([[]])))['inverter.errorCode'],0);
+  assert.equal(map(alarmValues({warns:[]}))['inverter.errorCode'],0);
+  assert.equal(map(alarmValues({warns:[{code:141,s_time:100,e_time:200}]}))['inverter.errorCode'],0);
+  assert.equal(map(alarmValues({warns:[{code:141,s_time:100}]}))['inverter.errorCode'],141);
+  assert.equal(map(alarmValues({warns:[{code:'141'}]}))['inverter.errorCode'],null);
   assert.equal(map(alarmValues({messages:[]}))['inverter.errorCode'],null);
   assert.equal(map(alarmValues({messages:[{ack:{action:50}}]}))['inverter.errorCode'],null);
   assert.equal(map(alarmValues(result([[{code:'23',s_time:200,e_time:0}]])))['inverter.errorCode'],null);
@@ -101,7 +105,7 @@ test('auxiliary failures do not turn successful live measurements offline',async
   const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client,log});
   await runtime.readLive();await runtime.readBackground();assert.equal(m.states.get(serial+'.info.connected').val,true);assert.equal(runtime.capabilities.history.status,'unavailable');assert.deepEqual(messages,[]);await runtime.stop();
 });
-test('background alarm query publishes confirmed codes and clears stale codes when data is unconfirmed',async()=>{
+test('background alarm confirmation preserves confirmed codes and a failed query clears its own code',async()=>{
   const m=memory();let reply={messages:[{data:{warns:[{code:41,s_time:10,e_time:0}]}}]};
   const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client:{close:()=>{},alarms:async()=>reply},log:{info:()=>{},warn:()=>{},debug:()=>{}}});
   runtime.serial='4143A0000001';runtime.initialized=true;runtime.tasks=[{name:'alarms',every:300000,next:0,read:()=>runtime.client.alarms()}];
@@ -109,8 +113,27 @@ test('background alarm query publishes confirmed codes and clears stale codes wh
   assert.equal(m.states.get('4143A0000001.inverter.errorCode').val,41);
   assert.equal(m.objects.get('4143A0000001.inverter.errorCode').common.write,false);
   reply={messages:[{ack:{action:50}}]};runtime.tasks[0].next=0;await runtime.readBackground();
+  assert.equal(m.states.get('4143A0000001.inverter.errorCode').val,41);
+  runtime.client.alarms=async()=>{throw Object.assign(Error(),{code:'SOCKET_ERROR'});};runtime.tasks[0].next=0;await runtime.readBackground();
   assert.equal(m.states.get('4143A0000001.inverter.errorCode').val,null);
   await runtime.stop();
+});
+test('confirmed warning lists drive the error code independently of alarm acknowledgements and failures',async()=>{
+  const m=memory(),messages=[],log=Object.fromEntries(['info','warn','debug','error'].map(level=>[level,message=>messages.push({level,message})]));
+  const runtime=new Runtime({config:{host:'127.0.0.1'},publisher:m.publisher,client:{close:()=>{}},log});
+  runtime.serial='4143A0000001';runtime.initialized=true;
+  const run=async(name,reply)=>{runtime.roundRobin=0;runtime.tasks=[{name,every:300000,next:0,read:async()=>{if(reply instanceof Error)throw reply;return reply;}}];await runtime.readBackground();return m.states.get(runtime.serial+'.inverter.errorCode').val;};
+  assert.equal(await run('alarms',{messages:[]}),null);
+  assert.equal(await run('warnings',{warns:[{code:141,s_time:100,e_time:200}]}),0);
+  assert.equal(await run('alarms',{messages:[]}),0);
+  assert.equal(await run('warnings',{warns:[{code:141,s_time:100},{code:143,s_time:200},{code:121,s_time:300,e_time:400}]}),143);
+  assert.equal(await run('alarms',{messages:[]}),143);
+  assert.equal(await run('alarms',Object.assign(Error(),{code:'SOCKET_ERROR'})),143);
+  assert.equal(await run('warnings',Object.assign(Error(),{code:'TIMEOUT'})),null);
+  assert.equal(await run('alarms',{messages:[]}),null);
+  assert.equal(await run('warnings',{warns:[]}),0);
+  assert.equal(await run('warnings',{warns:[{code:'141'}]}),null);
+  assert.deepEqual(messages,[]);await runtime.stop();
 });
 test('stopping during startup cannot create orphan timers or later DTU requests',async()=>{
   let unblock,reads=0;

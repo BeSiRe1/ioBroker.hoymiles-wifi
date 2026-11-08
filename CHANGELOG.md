@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.5 (2026-11-08)
+
+- Derive the active inverter error code from confirmed paginated warning lists as well as embedded alarm records. Ignore ended historical records.
+- Treat confirmed warning lists as authoritative; command-only alarm acknowledgements and failures cannot clear their result. Failed or invalid warning reads yield unknown until confirmed again.
+
 ## 0.2.4 (2026-11-08)
 
 - Remove the repeated code number from all 227 alarm labels. Keep numeric keys and stored values unchanged.
