@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "news": {
+      "0.2.4": {
+        "en": "Show alarm descriptions without repeating the numeric code in the state labels.",
+        "de": "Alarmtexte in der Werteliste ohne vorangestellte Codenummer anzeigen."
+      },
       "0.2.3": {
         "en": "Keep DTU connection failures, repeated retries and recovery silent while retaining status states and automatic reconnect.",
         "de": "DTU-Verbindungsfehler, weitere Fehlversuche und Wiederverbindung ohne Logmeldungen behandeln; Statusdatenpunkte und automatische Verbindungsversuche beibehalten."

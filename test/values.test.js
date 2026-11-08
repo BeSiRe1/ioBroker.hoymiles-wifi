@@ -9,7 +9,8 @@ const map=items=>Object.fromEntries(items.map(x=>[x.id,x.val]));
 test('alarm labels cover the combined list without rejecting unknown numeric codes',()=>{
   const states=require('../lib/alarm-codes.json');
   assert.equal(Object.keys(states).length,227);
-  for(const [code,label] of Object.entries(states)){assert.match(code,/^\d+$/);assert.ok(label.startsWith(code+' – '));assert.ok(!/undefined|null/.test(label));}
+  for(const [code,label] of Object.entries(states)){assert.match(code,/^\d+$/);assert.equal(typeof label,'string');assert.ok(label.length>0);assert.ok(!/^\d+\s*[–-]/.test(label));assert.ok(!/undefined|null/.test(label));}
+  assert.deepEqual(Object.fromEntries(Object.entries(states).slice(0,5)),{'0':'Kein aktiver Alarm','1':'Gerätestart / Neustart','2':'Zeitkalibrierung','3':'EEPROM Lese-/Schreibfehler während des Betriebs','4':'Offline'});
   assert.match(states[141],/Netzüberspannung/);assert.match(states[221],/modellabhängig/);assert.match(states[0],/Kein aktiver Alarm/);
   const entry=alarmValues({messages:[{data:{warns:[{code:999999,s_time:1,e_time:0}]}}]})[0];
   assert.equal(entry.val,999999);assert.equal(entry.type,'number');assert.equal(entry.states[999999],undefined);

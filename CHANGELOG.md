@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4 (2026-11-08)
+
+- Remove the repeated code number from all 227 alarm labels. Keep numeric keys and stored values unchanged.
+
 ## 0.2.3 (2026-11-07)
 
 - Silence DTU live/background connection failures, repeated retries and recovery messages. Preserve status states, data quality and automatic reconnection.
