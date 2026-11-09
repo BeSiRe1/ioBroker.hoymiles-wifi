@@ -54,6 +54,12 @@ tests.integration(path.join(__dirname, '..'),{
         for(const id of [sn+'.inverter',sn+'.pv0'])assert.ok(await object(id));
         assert.equal((await object(sn)).common.statusStates.onlineId,'info.connected');assert.equal((await state(sn+'.info.connected')).val,true);
         const persisted=JSON.parse((await state(sn+'.internal.dailyEnergy')).val);assert.ok(Object.keys(persisted.counters).every(id=>!id.startsWith('inverters.')));
+        assert.equal(JSON.parse((await until(()=>state(sn+'.internal.yields'))).val).schema,1);
+        assert.deepEqual(JSON.parse((await until(()=>state(sn+'.grid.yields.daysJson'))).val),[]);
+        assert.ok((await until(()=>state(sn+'.grid.yields.month'))).val>=0.12);
+        assert.equal((await object(sn+'.grid.yields.month')).common.unit,'kWh');
+        assert.equal((await object(sn+'.grid.yields.daysJson')).common.role,'json');
+        assert.equal((await state(sn+'.info.yieldsError')).val,'');
         assert.equal((await state(sn+'.grid.dailyEnergyDtu')).val,0.123);
         const curveDay=await until(()=>state(sn+'.history.curveDay'));const counterDay=await state(sn+'.info.dailyDay');
         if(curveDay.val===counterDay.val){assert.equal((await until(async()=>{const item=await state(sn+'.info.dailyConfirmed');return item?.val===true?item:null;})).val,true);assert.equal((await state(sn+'.grid.dailyEnergy')).val,0.123);}

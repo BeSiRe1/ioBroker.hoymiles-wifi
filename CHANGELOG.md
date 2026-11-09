@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 (2026-11-09)
+
+- Add independent persistent yield archives for the grid and each PV input in Europe/Berlin, with restart-safe calendar closure and absolute daily counters.
+- Publish finalized daily/monthly/yearly JSON arrays, live current-month/current-year totals including today, and the average of finalized recorded days.
+- Preserve imported historic rows and independent aggregate baselines; personal data transfer is performed separately from the released adapter.
+- Keep missing days visible through coverage metadata rather than fabricated zero records.
+
+## 0.2.6 (2026-11-08)
+
+- Add a German no-reported-error label for zero PV port error codes, including existing objects. Keep undocumented nonzero PV codes numeric and separate from the inverter alarm lookup.
+
 ## 0.2.5 (2026-11-08)
 
 - Derive the active inverter error code from confirmed paginated warning lists as well as embedded alarm records. Ignore ended historical records.

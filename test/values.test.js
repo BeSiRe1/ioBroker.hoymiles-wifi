@@ -39,6 +39,16 @@ test('normalizes units and negative temperatures, keeps panel identity by port',
   assert.equal(v['inverter.temperature'],-3.2);assert.equal(v['inverter.serialNumber'],'1412A0000001');assert.equal(v['inverter.linkStatus'],0);
   assert.equal(v['pv0.power'],72.5);assert.equal(v['pv1.power'],64.7);assert.equal(v['pv0.totalEnergy'],242.557);assert.equal(v['grid.dailyEnergy'],0.168);
 });
+test('PV error labels describe zero without misusing the inverter alarm lookup',async()=>{
+  const values=liveValues({...data,pv_data:data.pv_data.map(pv=>({...pv,error_code:pv.port_number===1?0:50331648}))});
+  const first=values.find(entry=>entry.id==='pv0.errorCode'),second=values.find(entry=>entry.id==='pv1.errorCode');
+  assert.equal(first.val,0);assert.equal(second.val,50331648);
+  for(const entry of [first,second]){assert.equal(entry.type,'number');assert.deepEqual(entry.states,{'0':'Kein PV-Fehler gemeldet'});assert.equal(entry.states[141],undefined);assert.equal(entry.states[50331648],undefined);}
+  const m=memory();
+  for(const entry of [first,second])m.objects.set('DTU.'+entry.id,{type:'state',common:{name:'Eigener PV-Name',type:'number',custom:{history:{enabled:true}}},native:{keep:true}});
+  await m.publisher.publish('DTU',values,'live');
+  for(const entry of [first,second]){const obj=m.objects.get('DTU.'+entry.id);assert.deepEqual(obj.common.states,{'0':'Kein PV-Fehler gemeldet'});assert.equal(obj.common.name,'Eigener PV-Name');assert.equal(obj.common.custom.history.enabled,true);assert.equal(obj.native.keep,true);assert.equal(m.states.get('DTU.'+entry.id).val,entry.val);}
+});
 test('zero is valid, missing values are not fabricated',()=>{
   const v=map(liveValues({dtu_power:'0',dtu_daily_energy:'0',sgs_data:[],pv_data:[{port_number:1,energy_daily:55}]}));
   assert.equal(v['grid.power'],0);assert.equal(v['grid.dailyEnergy'],0);assert.equal(v['grid.voltage'],undefined);

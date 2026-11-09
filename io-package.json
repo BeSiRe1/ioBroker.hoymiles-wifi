@@ -1,8 +1,16 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.2.5",
+    "version": "0.3.0",
     "news": {
+      "0.3.0": {
+        "en": "Add persistent daily, monthly and yearly yield JSONs, live current-period totals and daily averages for the grid and each PV input.",
+        "de": "Persistente Tages-, Monats- und Jahresertrags-JSONs, laufende Monat-/Jahressummen und Tagesdurchschnitt für Anlage und PV-Eingänge ergänzen."
+      },
+      "0.2.6": {
+        "en": "Label zero PV error codes as no reported PV error; preserve undocumented port codes numerically without applying inverter alarm meanings.",
+        "de": "PV-Fehlercode 0 als kein gemeldeter PV-Fehler beschriften; nicht dokumentierte Portcodes numerisch erhalten, ohne Wechselrichter-Alarmtexte zuzuordnen."
+      },
       "0.2.5": {
         "en": "Use confirmed warning lists for the active inverter error code; prevent command-only alarm acknowledgements from clearing valid values.",
         "de": "Bestätigte Warnungslisten für den aktiven Wechselrichter-Fehlercode verwenden; gültige Werte vor reinen Alarmbestätigungen schützen."

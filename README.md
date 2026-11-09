@@ -2,7 +2,7 @@
 
 Lokaler ioBroker-Adapter für Hoymiles-WLAN-DTUs. / Local ioBroker adapter for Hoymiles WiFi DTUs.
 
-**Entwicklungsversion 0.2.5.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
+**Entwicklungsversion 0.3.0.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
 
 ## Installation
 
@@ -62,6 +62,14 @@ Die ursprünglichen DTU-Tageszähler stehen parallel unter `dailyEnergyDtu`. Die
 
 Tagesstände und Vortagesgrenzen werden im lesbaren JSON-Zustand `internal.dailyEnergy` gespeichert. Beim neuen Tag werden positive Werte erst übernommen, wenn eine Zählerrücksetzung oder ein passender, neu abgerufener Leistungsverlauf desselben Tages vorliegt. Bis dahin zeigt der Tageszähler 0 und `info.dailyConfirmed` ist false. Das gilt auch für die erste Einrichtung bei einem positiven Tageszähler. Bekannte alte Vortagesstände und verspätete Antworten von vor Mitternacht werden gesperrt. Innerhalb eines Tages werden keine Rücksprünge übernommen. Adapterneustarts löschen keine bestätigten Tagesstände; unveränderte Tagesstände werden nicht laufend erneut gespeichert.
 
+### Ertragsarchive und Tagesdurchschnitt
+
+Unter `grid.yields` und den jeweiligen `pv0.yields`, `pv1.yields` usw. werden bestätigte Erträge dauerhaft gespeichert. `daysJson` enthält abgeschlossene Tage mit `Datum` im Format TT.MM.JJJJ und `Ertrag`; `monthsJson` abgeschlossene Monate mit `Datum` im Format MM.JJJJ und `Ertrag`; `yearsJson` abgeschlossene Jahre mit `Jahr` und `Ertrag`. Die Listen sind absteigend nach Datum sortiert. `Ertrag` ist eine Zeichenfolge in kWh mit höchstens zwei Nachkommastellen.
+
+`month` und `year` enthalten die laufenden Summen einschließlich des bereits bestätigten heutigen Tages. `average` ist der Tagesdurchschnitt über die abgeschlossenen erfassten Tage; `daysRecorded` ist deren Anzahl. Der laufende Tag wird beim Tageswechsel abgeschlossen. `startDate` zeigt den Beginn der Erfassung. `qualityJson` beschreibt die Datenabdeckung; nicht erfasste Tage werden nicht als Nullerträge erfunden.
+
+Maßgeblich ist der persistente Speicher `internal.yields`. Wiederholte Messwerte und Neustarts werden nicht doppelt gezählt. Monats-/Jahreswechsel und Sommer-/Winterzeit folgen Europe/Berlin. Ein nicht lesbarer Speicher bleibt erhalten; `info.yieldsError` zeigt den Fehler. Neue Installationen beginnen ohne persönliche Altdaten. Eine vorhandene Historie wird bei Bedarf einmalig außerhalb des Adapters übertragen; persönliche Quell-IDs sind kein Bestandteil des Pakets.
+
 ### Datenalter und Fehler
 
 - `info.lastResponse`: letzte erfolgreiche Liveantwort.
@@ -86,6 +94,6 @@ This development adapter reads a Hoymiles WiFi DTU directly over the local netwo
 
 Managed total/PV daily energy counters reset at midnight in Europe/Berlin, including offline operation and daylight-saving changes. Original device counters remain available as `dailyEnergyDtu`. Persistent restart protection and a current-day confirmation guard prevent the previous day's final value from immediately repopulating a reset counter; `info.dailyConfirmed` indicates confirmation.
 
-Normalized grid, inverter, direct PV and history states are provided where supported. Version 0.2.5 uses only the simplified inverter and direct PV structure, with device online/offline marking through info.connected and active inverter alarms through inverter.errorCode. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
+Normalized grid, inverter, direct PV and history states are provided where supported. Version 0.3.0 uses only the simplified inverter and direct PV structure, with device online/offline marking through info.connected and active inverter alarms through inverter.errorCode. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
 
 Only one local integration should query the same DTU. See the German tables above for state groups and configuration. Tests and CI cover protocol, networking, projections and ioBroker startup. See [CHANGELOG.md](CHANGELOG.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).
