@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "news": {
+      "0.4.2": {
+        "de": "Sicherungsstatus und letzten Erfolg in den Einstellungen laufend aktualisieren; Admin ab 7.1.0 verwenden.",
+        "en": "Keep backup status and last success live in configuration; require Admin 7.1.0 or newer."
+      },
       "0.4.1": {
         "de": "Ordnerauswahl für die Ertragssicherung korrigieren und Aktionsschaltflächen deutlicher darstellen.",
         "en": "Fix yield backup folder selection and make action buttons clearly visible."
@@ -96,7 +100,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=5.0.0"
+        "admin": ">=7.1.0"
       }
     ],
     "extIcon": "https://raw.githubusercontent.com/BeSiRe1/ioBroker.hoymiles-wifi/main/admin/hoymiles-wifi.svg",
@@ -134,6 +138,22 @@
         "read": true,
         "write": false,
         "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.yieldBackupText",
+      "type": "state",
+      "common": {
+        "name": {
+          "de": "Sicherungsstatus und letzter Erfolg",
+          "en": "Backup status and last success"
+        },
+        "type": "string",
+        "role": "text",
+        "read": true,
+        "write": false,
+        "def": "Warte auf Sicherungsstatus"
       },
       "native": {}
     }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 (2026-11-10)
+
+- Bind the configuration status display to a readonly live state so manual queries and automatic backups update the displayed status and last-success time.
+- Share status text formatting between the live state and message response, and require Admin 7.1.0 for the state display.
+
 ## 0.4.1 (2026-11-10)
 
 - Fix backup folder selection by explicitly selecting folder objects instead of applying a folder filter to the default state selection.

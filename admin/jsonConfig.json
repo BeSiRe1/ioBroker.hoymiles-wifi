@@ -122,19 +122,16 @@
       "sm": 12
     },
     "_backupStatus": {
-      "type": "textSendTo",
-      "command": "yieldBackupStatus",
+      "type": "state",
+      "oid": "info.yieldBackupText",
+      "control": "text",
+      "readOnly": true,
       "label": {
         "de": "Sicherungsstatus und letzter Erfolg",
         "en": "Backup status and last success"
       },
-      "container": "text",
       "newLine": true,
-      "sm": 12,
-      "alsoDependsOn": [
-        "backupEnabled",
-        "backupFolder"
-      ]
+      "sm": 12
     },
     "_backupRefresh": {
       "type": "sendTo",

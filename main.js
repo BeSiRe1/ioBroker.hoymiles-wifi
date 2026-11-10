@@ -7,7 +7,7 @@
 //
 // Startet und beendet die lokale Hoymiles-DTU-Anbindung.
 //
-// Version: 0.1.1.0 (10.11.2026)
+// Version: 0.1.1.1 (10.11.2026)
 //
 // ************************************************************
 // ============================================================
@@ -29,6 +29,7 @@
 const {Adapter}=require('@iobroker/adapter-core');
 const {Publisher}=require('./lib/publisher');
 const {Runtime}=require('./lib/runtime');
+const {formatBackupStatus}=require('./lib/backup');
 // ============================================================
 
 // ============================================================
@@ -61,9 +62,7 @@ class HoymilesWifi extends Adapter{
     if(!this.runtime){this.sendTo(message.from,message.command,{error:'ADAPTER_NOT_READY'},message.callback);return;}
     if(message.command==='yieldBackupRestore'){this.sendTo(message.from,message.command,await this.runtime.restoreBackup(),message.callback);return;}
     const state=await this.runtime.backupStatus();
-    const names={disabled:'Ausgeschaltet',waitingForDevice:'Warte auf Gerätezuordnung',ready:'Bereit für die erste Sicherung',available:'Vorhandene Sicherung gefunden',saved:'Sicherung aktuell',restored:'Sicherung wiederhergestellt',restoreRequired:'Vorhandener Bestand geschützt – Wiederherstellung erforderlich',error:'Sicherung nicht möglich',unavailable:'Adapter nicht bereit'};
-    const stamp=state.lastSuccess?new Date(state.lastSuccess).toLocaleString('de-DE',{timeZone:'Europe/Berlin'}):'noch keine';
-    const text=(names[state.status]||state.status)+' | Letzte erfolgreiche Sicherung: '+stamp+(state.target?' | '+state.target:'')+(state.error?' | '+state.error:'');
+    const text=formatBackupStatus(state);
     this.sendTo(message.from,message.command,{text,result:text},message.callback);
   }
 }
@@ -78,6 +77,9 @@ if(require.main!==module)module.exports=options=>new HoymilesWifi(options);else 
 // ============================================================
 // [BLOCK:1000] Änderungsverlauf
 // ============================================================
+// 0.1.1.1 (10.11.2026): 
+// - Statusabfrage und automatische Statusanzeige mit derselben Textformatierung versorgen.
+//
 // 0.1.1.0 (10.11.2026): 
 // - Nachrichten für Sicherungsstatus und Wiederherstellung aus der Adapterkonfiguration anbinden.
 //
