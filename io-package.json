@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "news": {
+      "0.4.0": {
+        "de": "Optionale externe Ertragssicherung mit Ordnerauswahl, geprüftem Wiederherstellen und Schutz vorhandener Bestände ergänzen.",
+        "en": "Add optional external yield backups with folder selection, validated restoration and protection of existing data."
+      },
       "0.3.0": {
         "en": "Add persistent daily, monthly and yearly yield JSONs, live current-period totals and daily averages for the grid and each PV input.",
         "de": "Persistente Tages-, Monats- und Jahresertrags-JSONs, laufende Monat-/Jahressummen und Tagesdurchschnitt für Anlage und PV-Eingänge ergänzen."
@@ -92,14 +96,17 @@
       }
     ],
     "extIcon": "https://raw.githubusercontent.com/BeSiRe1/ioBroker.hoymiles-wifi/main/admin/hoymiles-wifi.svg",
-    "tier": 3
+    "tier": 3,
+    "messagebox": true
   },
   "native": {
     "host": "",
     "port": 10081,
     "interval": 35,
     "timeout": 10,
-    "historyInterval": 300
+    "historyInterval": 300,
+    "backupEnabled": false,
+    "backupFolder": ""
   },
   "instanceObjects": [
     {

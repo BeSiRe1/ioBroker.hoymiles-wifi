@@ -1,14 +1,234 @@
 {
-  "type":"panel",
-  "i18n":false,
-  "items":{
-    "_header":{"type":"header","text":{"de":"Verbindung zur DTU","en":"DTU connection"},"size":3,"sm":12},
-    "host":{"type":"text","label":{"de":"IP-Adresse oder Hostname der DTU","en":"DTU IP address or hostname"},"sm":8},
-    "port":{"type":"number","label":{"de":"DTU-Port","en":"DTU port"},"min":1,"max":65535,"default":10081,"sm":4},
-    "_pollHeader":{"type":"header","text":{"de":"Abfragen","en":"Polling"},"size":3,"newLine":true,"sm":12},
-    "interval":{"type":"number","label":{"de":"Livewerte: Abstand in Sekunden","en":"Live data interval in seconds"},"min":35,"max":3600,"default":35,"sm":6},
-    "historyInterval":{"type":"number","label":{"de":"History: Abstand in Sekunden","en":"History interval in seconds"},"min":300,"max":86400,"default":300,"sm":6},
-    "timeout":{"type":"number","label":{"de":"Wartezeit auf eine Antwort in Sekunden","en":"Response timeout in seconds"},"min":3,"max":30,"default":10,"sm":6},
-    "_help":{"type":"staticText","newLine":true,"text":{"de":"Der Adapter liest die DTU direkt im lokalen Netzwerk aus. Die Internetverbindung und ein Hoymiles-Konto sind dafür nicht erforderlich. Verwende nur eine aktive lokale Anbindung zur selben DTU. Die Datenpunkte werden anhand der tatsächlich gemeldeten Daten angelegt. Nicht unterstützte Abfragen sind unter info.capabilities erkennbar.","en":"The adapter reads the DTU directly on the local network. No internet connection or Hoymiles account is required. Use only one active local integration for the same DTU. States are created from the data actually reported. Unsupported or unsuccessful requests are visible in info.capabilities."},"sm":12}
+  "type": "panel",
+  "i18n": false,
+  "items": {
+    "_header": {
+      "type": "header",
+      "text": {
+        "de": "Verbindung zur DTU",
+        "en": "DTU connection"
+      },
+      "size": 3,
+      "sm": 12
+    },
+    "host": {
+      "type": "text",
+      "label": {
+        "de": "IP-Adresse oder Hostname der DTU",
+        "en": "DTU IP address or hostname"
+      },
+      "sm": 8
+    },
+    "port": {
+      "type": "number",
+      "label": {
+        "de": "DTU-Port",
+        "en": "DTU port"
+      },
+      "min": 1,
+      "max": 65535,
+      "default": 10081,
+      "sm": 4
+    },
+    "_pollHeader": {
+      "type": "header",
+      "text": {
+        "de": "Abfragen",
+        "en": "Polling"
+      },
+      "size": 3,
+      "newLine": true,
+      "sm": 12
+    },
+    "interval": {
+      "type": "number",
+      "label": {
+        "de": "Livewerte: Abstand in Sekunden",
+        "en": "Live data interval in seconds"
+      },
+      "min": 35,
+      "max": 3600,
+      "default": 35,
+      "sm": 6
+    },
+    "historyInterval": {
+      "type": "number",
+      "label": {
+        "de": "History: Abstand in Sekunden",
+        "en": "History interval in seconds"
+      },
+      "min": 300,
+      "max": 86400,
+      "default": 300,
+      "sm": 6
+    },
+    "timeout": {
+      "type": "number",
+      "label": {
+        "de": "Wartezeit auf eine Antwort in Sekunden",
+        "en": "Response timeout in seconds"
+      },
+      "min": 3,
+      "max": 30,
+      "default": 10,
+      "sm": 6
+    },
+    "_help": {
+      "type": "staticText",
+      "newLine": true,
+      "text": {
+        "de": "Der Adapter liest die DTU direkt im lokalen Netzwerk aus. Die Internetverbindung und ein Hoymiles-Konto sind dafür nicht erforderlich. Verwende nur eine aktive lokale Anbindung zur selben DTU. Die Datenpunkte werden anhand der tatsächlich gemeldeten Daten angelegt. Nicht unterstützte Abfragen sind unter info.capabilities erkennbar.",
+        "en": "The adapter reads the DTU directly on the local network. No internet connection or Hoymiles account is required. Use only one active local integration for the same DTU. States are created from the data actually reported. Unsupported or unsuccessful requests are visible in info.capabilities."
+      },
+      "sm": 12
+    },
+    "_backupHeader": {
+      "type": "header",
+      "text": {
+        "de": "Ertragssicherung",
+        "en": "Yield backup"
+      },
+      "size": 3,
+      "newLine": true,
+      "sm": 12
+    },
+    "backupEnabled": {
+      "type": "checkbox",
+      "label": {
+        "de": "Ertragssicherung aktivieren",
+        "en": "Enable yield backup"
+      },
+      "default": false,
+      "sm": 12
+    },
+    "backupFolder": {
+      "type": "objectId",
+      "label": {
+        "de": "Zielordner unter 0_userdata.0",
+        "en": "Target folder under 0_userdata.0"
+      },
+      "root": "0_userdata.0",
+      "customFilter": {
+        "type": [
+          "folder",
+          "channel"
+        ]
+      },
+      "default": "",
+      "disabled": "!data.backupEnabled",
+      "sm": 12
+    },
+    "_backupHelp": {
+      "type": "staticText",
+      "text": {
+        "de": "Der Adapter legt im gewählten vorhandenen Datenpunktordner eine vollständige Ertragssicherung pro DTU an. Sie bleibt beim Löschen der Adapterinstanz erhalten. Aktivierung und Zielordner zuerst speichern. Eine vorhandene Sicherung mit zusätzlichen oder abweichenden Daten bleibt geschützt; die Wiederherstellung ergänzt sie um inzwischen erfasste Werte und bricht bei widersprüchlichen Beständen ab.",
+        "en": "The adapter creates a complete yield backup per DTU in the selected existing state folder. It survives deletion of the adapter instance. Save the enabled setting and target folder first. Existing backups with additional or different data are protected; restoration retains newly recorded values and rejects incompatible data."
+      },
+      "sm": 12
+    },
+    "_backupStatus": {
+      "type": "textSendTo",
+      "command": "yieldBackupStatus",
+      "label": {
+        "de": "Sicherungsstatus und letzter Erfolg",
+        "en": "Backup status and last success"
+      },
+      "container": "text",
+      "newLine": true,
+      "sm": 12,
+      "alsoDependsOn": [
+        "backupEnabled",
+        "backupFolder"
+      ]
+    },
+    "_backupRefresh": {
+      "type": "sendTo",
+      "command": "yieldBackupStatus",
+      "label": {
+        "de": "Status abfragen",
+        "en": "Check status"
+      },
+      "newLine": true,
+      "sm": 6,
+      "showProcess": true,
+      "timeout": 20000
+    },
+    "_backupRestore": {
+      "type": "sendTo",
+      "command": "yieldBackupRestore",
+      "label": {
+        "de": "Sicherung wiederherstellen",
+        "en": "Restore backup"
+      },
+      "disabled": "!data.backupEnabled || !data.backupFolder",
+      "data": {},
+      "showProcess": true,
+      "timeout": 30000,
+      "result": {
+        "restored": {
+          "de": "Ertragssicherung wiederhergestellt und gespeichert.",
+          "en": "Yield backup restored and saved."
+        }
+      },
+      "error": {
+        "ADAPTER_NOT_READY": {
+          "de": "Adapter ist noch nicht bereit. Einstellungen speichern und Instanz starten.",
+          "en": "ADAPTER_NOT_READY"
+        },
+        "BACKUP_DISABLED": {
+          "de": "Sicherung ist in den gespeicherten Einstellungen ausgeschaltet.",
+          "en": "BACKUP_DISABLED"
+        },
+        "INVALID_BACKUP_FOLDER": {
+          "de": "Bitte einen gültigen Ordner unter 0_userdata.0 wählen und speichern.",
+          "en": "INVALID_BACKUP_FOLDER"
+        },
+        "BACKUP_FOLDER_NOT_FOUND": {
+          "de": "Der ausgewählte Sicherungsordner existiert nicht.",
+          "en": "BACKUP_FOLDER_NOT_FOUND"
+        },
+        "BACKUP_NOT_FOUND": {
+          "de": "Keine Sicherung gefunden.",
+          "en": "BACKUP_NOT_FOUND"
+        },
+        "BACKUP_DEVICE_AMBIGUOUS": {
+          "de": "Mehrere Geräte gefunden. Bitte zuerst die DTU-Verbindung herstellen.",
+          "en": "BACKUP_DEVICE_AMBIGUOUS"
+        },
+        "BACKUP_TARGET_OCCUPIED": {
+          "de": "Der Sicherungsdatenpunkt ist anderweitig belegt.",
+          "en": "BACKUP_TARGET_OCCUPIED"
+        },
+        "INVALID_BACKUP": {
+          "de": "Die Sicherung ist ungültig oder beschädigt und wurde nicht verändert.",
+          "en": "INVALID_BACKUP"
+        },
+        "BACKUP_CHANGED": {
+          "de": "Die Sicherung wurde zwischenzeitlich geändert. Bitte erneut prüfen.",
+          "en": "BACKUP_CHANGED"
+        },
+        "RESTORE_WOULD_LOSE_DATA": {
+          "de": "Die Bestände widersprechen sich. Neuere lokale Daten werden nicht überschrieben.",
+          "en": "RESTORE_WOULD_LOSE_DATA"
+        },
+        "RESTORE_LOCAL_INVALID": {
+          "de": "Der lokale Bestand ist nicht lesbar. Vor der Wiederherstellung ist eine Prüfung erforderlich.",
+          "en": "RESTORE_LOCAL_INVALID"
+        },
+        "RESTORE_PERSISTENCE_PENDING": {
+          "de": "Wiederherstellung ist eingelesen; die Speicherung muss noch erfolgreich abgeschlossen werden.",
+          "en": "RESTORE_PERSISTENCE_PENDING"
+        },
+        "RESTORE_VERIFY_FAILED": {
+          "de": "Die gespeicherte Wiederherstellung konnte nicht bestätigt werden.",
+          "en": "RESTORE_VERIFY_FAILED"
+        },
+        "RESTORE_FAILED": {
+          "de": "Wiederherstellung fehlgeschlagen.",
+          "en": "RESTORE_FAILED"
+        }
+      },
+      "sm": 6
+    }
   }
 }

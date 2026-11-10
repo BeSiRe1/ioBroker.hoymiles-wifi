@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 (2026-11-10)
+
+- Add optional complete external backups under a selected 0_userdata.0 folder, disabled by default.
+- Validate device identity and checksums, protect existing data, restore while retaining newly recorded daily values, and expose backup status and last-success time.
+- Add folder selection and backup status/restore controls to Admin configuration.
+
 ## 0.3.0 (2026-11-09)
 
 - Add independent persistent yield archives for the grid and each PV input in Europe/Berlin, with restart-safe calendar closure and absolute daily counters.

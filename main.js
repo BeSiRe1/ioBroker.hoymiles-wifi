@@ -7,7 +7,7 @@
 //
 // Startet und beendet die lokale Hoymiles-DTU-Anbindung.
 //
-// Version: 0.1.0.0 (07.11.2026)
+// Version: 0.1.1.0 (10.11.2026)
 //
 // ************************************************************
 // ============================================================
@@ -40,6 +40,7 @@ class HoymilesWifi extends Adapter{
     this.unloading=false;
     this.on('ready',()=>this.onReady().catch(error=>this.log.error(`Adapterstart fehlgeschlagen: ${error.code||'INITIALIZATION_FAILED'}`)));
     this.on('unload',callback=>this.onUnload(callback));
+    this.on('message',message=>this.onMessage(message).catch(()=>{if(message?.callback)this.sendTo(message.from,message.command,{error:'BACKUP_COMMAND_FAILED'},message.callback);}));
   }
   async onReady(){
     if(this.unloading)return;
@@ -55,6 +56,16 @@ class HoymilesWifi extends Adapter{
     catch{this.log.debug('Verbindung wurde beim Beenden geschlossen.');}
     finally{callback();}
   }
+  async onMessage(message){
+    if(!message?.callback||!['yieldBackupStatus','yieldBackupRestore'].includes(message.command))return;
+    if(!this.runtime){this.sendTo(message.from,message.command,{error:'ADAPTER_NOT_READY'},message.callback);return;}
+    if(message.command==='yieldBackupRestore'){this.sendTo(message.from,message.command,await this.runtime.restoreBackup(),message.callback);return;}
+    const state=await this.runtime.backupStatus();
+    const names={disabled:'Ausgeschaltet',waitingForDevice:'Warte auf Gerätezuordnung',ready:'Bereit für die erste Sicherung',available:'Vorhandene Sicherung gefunden',saved:'Sicherung aktuell',restored:'Sicherung wiederhergestellt',restoreRequired:'Vorhandener Bestand geschützt – Wiederherstellung erforderlich',error:'Sicherung nicht möglich',unavailable:'Adapter nicht bereit'};
+    const stamp=state.lastSuccess?new Date(state.lastSuccess).toLocaleString('de-DE',{timeZone:'Europe/Berlin'}):'noch keine';
+    const text=(names[state.status]||state.status)+' | Letzte erfolgreiche Sicherung: '+stamp+(state.target?' | '+state.target:'')+(state.error?' | '+state.error:'');
+    this.sendTo(message.from,message.command,{text,result:text},message.callback);
+  }
 }
 // ============================================================
 
@@ -67,6 +78,9 @@ if(require.main!==module)module.exports=options=>new HoymilesWifi(options);else 
 // ============================================================
 // [BLOCK:1000] Änderungsverlauf
 // ============================================================
+// 0.1.1.0 (10.11.2026): 
+// - Nachrichten für Sicherungsstatus und Wiederherstellung aus der Adapterkonfiguration anbinden.
+//
 // 0.1.0.0 (07.11.2026): 
 // - Erste Entwicklungsfassung der lokalen Hoymiles-WLAN-Anbindung.
 //
