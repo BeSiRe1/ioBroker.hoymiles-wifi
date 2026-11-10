@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 (2026-11-10)
+
+- Fix backup folder selection by explicitly selecting folder objects instead of applying a folder filter to the default state selection.
+- Render backup actions as filled buttons with a visible border and larger padding.
+
 ## 0.4.0 (2026-11-10)
 
 - Add optional complete external backups under a selected 0_userdata.0 folder, disabled by default.

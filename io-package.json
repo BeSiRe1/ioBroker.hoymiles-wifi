@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "hoymiles-wifi",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "news": {
+      "0.4.1": {
+        "de": "Ordnerauswahl für die Ertragssicherung korrigieren und Aktionsschaltflächen deutlicher darstellen.",
+        "en": "Fix yield backup folder selection and make action buttons clearly visible."
+      },
       "0.4.0": {
         "de": "Optionale externe Ertragssicherung mit Ordnerauswahl, geprüftem Wiederherstellen und Schutz vorhandener Bestände ergänzen.",
         "en": "Add optional external yield backups with folder selection, validated restoration and protection of existing data."

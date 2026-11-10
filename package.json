@@ -1,6 +1,6 @@
 {
   "name": "iobroker.hoymiles-wifi",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Local Hoymiles DTU reader with PV monitoring, complete power history and midnight daily energy reset",
   "main": "main.js",
   "license": "MIT",

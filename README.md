@@ -2,7 +2,7 @@
 
 Lokaler ioBroker-Adapter für Hoymiles-WLAN-DTUs. / Local ioBroker adapter for Hoymiles WiFi DTUs.
 
-**Entwicklungsversion 0.4.0.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
+**Entwicklungsversion 0.4.1.** Die Unterstützung einzelner Abfragen hängt von DTU und Firmware ab. Der Adapter verändert keine Geräteeinstellungen und sendet keine Neustart-, Leistungsbegrenzungs- oder Firmwarebefehle.
 
 ## Installation
 
@@ -102,6 +102,6 @@ This development adapter reads a Hoymiles WiFi DTU directly over the local netwo
 
 Managed total/PV daily energy counters reset at midnight in Europe/Berlin, including offline operation and daylight-saving changes. Original device counters remain available as `dailyEnergyDtu`. Persistent restart protection and a current-day confirmation guard prevent the previous day's final value from immediately repopulating a reset counter; `info.dailyConfirmed` indicates confirmation.
 
-Normalized grid, inverter, direct PV and history states are provided where supported. Version 0.4.0 uses only the simplified inverter and direct PV structure, with device online/offline marking through info.connected and active inverter alarms through inverter.errorCode. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
+Normalized grid, inverter, direct PV and history states are provided where supported. Version 0.4.1 uses only the simplified inverter and direct PV structure, with device online/offline marking through info.connected and active inverter alarms through inverter.errorCode. Passwords and encryption material are never published. Historical pages are committed only as a complete result. Local history availability depends on the device and firmware and is not an unlimited cloud archive. Failed requests preserve old values with bad quality, publish diagnostic status and recover automatically. The adapter has no device-changing controls.
 
 Only one local integration should query the same DTU. See the German tables above for state groups and configuration. Tests and CI cover protocol, networking, projections and ioBroker startup. See [CHANGELOG.md](CHANGELOG.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE).

@@ -108,12 +108,7 @@
         "en": "Target folder under 0_userdata.0"
       },
       "root": "0_userdata.0",
-      "customFilter": {
-        "type": [
-          "folder",
-          "channel"
-        ]
-      },
+      "types": "folder",
       "default": "",
       "disabled": "!data.backupEnabled",
       "sm": 12
@@ -143,6 +138,13 @@
     },
     "_backupRefresh": {
       "type": "sendTo",
+      "variant": "contained",
+      "controlStyle": {
+        "minHeight": 40,
+        "padding": "8px 20px",
+        "fontWeight": 600,
+        "border": "1px solid currentColor"
+      },
       "command": "yieldBackupStatus",
       "label": {
         "de": "Status abfragen",
@@ -155,6 +157,13 @@
     },
     "_backupRestore": {
       "type": "sendTo",
+      "variant": "contained",
+      "controlStyle": {
+        "minHeight": 40,
+        "padding": "8px 20px",
+        "fontWeight": 600,
+        "border": "1px solid currentColor"
+      },
       "command": "yieldBackupRestore",
       "label": {
         "de": "Sicherung wiederherstellen",
